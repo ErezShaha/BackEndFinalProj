@@ -4,23 +4,38 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import userRouter from './routers/userRouter.js';
+import http from 'http';
+import { Server } from'socket.io';
+
 
 config();
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const server = HTMLOutputElement.createServer(app);
-const io = new server(server, {
+const server = http.createServer(app);
+const io = new Server(server, {
     cors: "*",
 });
 
-io.on('connection', (socket) => {
+
+
+io.on("connection", (socket) => {
+
     socket.on("SendMessageToEveryone", (message) => {
         const messageObject = {id: Date.now(), content: message};
         io.emit("RecieveMessage", messageObject);
     })
-})
 
+
+    socket.on("JoinRoom", (room) => {
+        socket.join(room);
+    });
+
+    socket.on("SendMessageToRoom", (room, message) => {
+        const messageObject = {id: Date.now(), content: message};
+        io.to(room).emit("RecieveMessage", messageObject);
+    });
+});
 
 
 
