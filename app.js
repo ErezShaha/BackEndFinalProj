@@ -70,13 +70,13 @@ io.on("connection", (socket) => {
         console.log(onlineUsers);
     });
     
-    socket.on("VerifiedRelogin", (username) => {
+    socket.on("CheckLoggedin", (username) => {
         if(onlineUsers[socket.id] === undefined) {
             onlineUsers[socket.id] = {username: username};
             console.log("good job saved dab");
             console.log(onlineUsers);
-            io.emit("hereTakeYourUser", Object.values(onlineUsers));  
         };
+        io.emit("hereTakeYourUser", Object.values(onlineUsers));  
     });
 
 
