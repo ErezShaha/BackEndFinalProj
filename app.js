@@ -17,6 +17,7 @@ const io = new Server(server, {
 });
 
 export const onlineUsers = {};
+const onlineRooms = [];
 
 io.on("connection", (socket) => {
     console.log(`Socket ${socket.id} Connected`); 
@@ -50,6 +51,11 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
         
         console.log(`Socket ${socket.id} disconnected. Logging out from user ${onlineUsers[socket.id]}`);
+
+        onlineRooms.splice(onlineUsers[socket.id], 1);
+        
+        //check if the users taht ahve shared rooms are still online if not delete them from the room list
+
         
         delete onlineUsers[socket.id];
         
@@ -80,6 +86,8 @@ io.on("connection", (socket) => {
     });
 
 
+
+
     socket.on("SendMessageToEveryone", (message) => {
         const messageObject = {id: Date.now(), content: message};
         io.emit("RecieveMessage", messageObject);
@@ -90,9 +98,38 @@ io.on("connection", (socket) => {
         socket.join(room);
     });
 
+    socket.on("JoinRoomForTwo", (invitedUsername) => {
+        const sharedRoom = Object.values(onlineUsers).find(roomConnections => roomConnections.username === invitedUsername).room;
+        if(!sharedRoom) {
+            sharedRoom = onlineUsers[socket.id].username + invitedUsername;
+            onlineRooms[onlineUsers[socket.id]] = {username: invitedUsername, room: roomName};
+            onlineRooms[invitedUsername].push({username: onlineUsers[socket.id].username, room: roomName});
+            socket.join(roomName);
+        } else {
+            socket.join(sharedRoom);
+        }
+        io.to(inviteUserSocketID).emit("BoBoLahederHabibi", sharedRoom);
+
+        //on the other side
+        // socket.on("BoBoLahederHabibi", (room) => {
+            // socket.join(room);
+            // setCorrentRoom(room);
+            // console.log("joined room");
+        // })
+    });
+
+    // const [currentRoom, setCorrentRoom] = useState();
+    // const [msgDM, setMsgDM] = useState([]);
+
+
     socket.on("SendMessageToRoom", (room, message) => {
         const messageObject = {id: Date.now(), content: message};
         io.to(room).emit("RecieveMessage", messageObject);
+
+        //on the other side
+        // socket.on("SendMessageToRoom", (message) => {
+            // setMsgDM([...msgDM, message]);
+        // })
     });
 });
 

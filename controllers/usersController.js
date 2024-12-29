@@ -61,7 +61,7 @@ export const login = async (req, res) => {
         //make token
         const token = jwt.sign({username: user.username}, 
             process.env.SECRET_KEY,
-            { expiresIn: '10m',  issuer: `http://localhost:${process.env.PORT||8080}` });
+            { expiresIn: '30m',  issuer: `http://localhost:${process.env.PORT||8080}` });
         
         //sends the cookie
         res.cookie('jwt', token, { httpOnly: true, maxAge: 900000 }); 
@@ -83,6 +83,7 @@ export const logout = async (req, res) => {
             res.status(404).json({error: 'Token not found'});
         }
         res.clearCookie('jwt');
+        
     }
     return res.send();
 }
