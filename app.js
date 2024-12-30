@@ -17,7 +17,7 @@ const io = new Server(server, {
 });
 
 export const onlineUsers = {};
-const onlineRooms = [];
+const onlineRooms = {};
 
 io.on("connection", (socket) => {
     console.log(`Socket ${socket.id} Connected`); 
@@ -49,19 +49,28 @@ io.on("connection", (socket) => {
 
     // Disconnect
     socket.on("disconnect", () => {
-        
+        console.log("======================Disconnect Start==========================");
         console.log(`Socket ${socket.id} disconnected. Logging out from user ${onlineUsers[socket.id]}`);
 
-        onlineRooms.splice(onlineUsers[socket.id], 1);
         
         //check if the users taht ahve shared rooms are still online if not delete them from the room list
-
-        
+        if(onlineRooms[onlineUsers[socket.id]]){
+            
+            console.log(onlineRooms);
+            onlineRooms[onlineUsers[socket.id]].forEach(userConnection => {
+                const indexToRemove = onlineRooms[userConnection.username].findIndex(roomConnection => roomConnection.username === userConnection.username);
+                onlineRooms[userConnection.username].splice(indexToRemove, 1);
+            });
+            console.log(onlineRooms);
+            delete onlineRooms[onlineUsers[socket.id]];
+            console.log(onlineRooms);
+        }
         delete onlineUsers[socket.id];
         
         // onlineChange
         console.log(onlineUsers);
         io.emit("hereTakeYourUser", Object.values(onlineUsers));
+        console.log("======================Disconnect End==========================");
     });
     
 
@@ -89,26 +98,39 @@ io.on("connection", (socket) => {
 
 
     socket.on("SendMessageToEveryone", (message) => {
-        const messageObject = {id: Date.now(), content: message};
+        const now = new Date();
+        const messageObject = {id: Date.now(), content: message , user: onlineUsers[socket.id], msgTime: `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`};
         io.emit("RecieveMessage", messageObject);
     })
 
+    socket.on("SendMessageToRoom", (room, message) => {
+        const now = new Date();
+        const messageObject = {id: Date.now(), content: message , user: onlineUsers[socket.id], msgTime: `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`};
+        io.to(room).emit("RecieveMessage", messageObject);
+
+        //on the other side
+        // socket.on("SendMessageToRoom", (message) => {
+            // setMsgDM([...msgDM, message]);
+        // })
+    });
 
     socket.on("JoinRoom", (room) => {
         socket.join(room);
     });
 
     socket.on("JoinRoomForTwo", (invitedUsername) => {
-        const sharedRoom = Object.values(onlineUsers).find(roomConnections => roomConnections.username === invitedUsername).room;
+        console.log("======================Join Room For Two Start==========================");
+        const sharedRoom = Object.values(onlineRooms[onlineUsers[socket.id]]).find(roomConnections => roomConnections.username === invitedUsername).room;
         if(!sharedRoom) {
             sharedRoom = onlineUsers[socket.id].username + invitedUsername;
-            onlineRooms[onlineUsers[socket.id]] = {username: invitedUsername, room: roomName};
+            onlineRooms[onlineUsers[socket.id]].push({username: invitedUsername, room: roomName});
             onlineRooms[invitedUsername].push({username: onlineUsers[socket.id].username, room: roomName});
             socket.join(roomName);
         } else {
             socket.join(sharedRoom);
         }
         io.to(inviteUserSocketID).emit("BoBoLahederHabibi", sharedRoom);
+        console.log("======================Join Room For Two End==========================");
 
         //on the other side
         // socket.on("BoBoLahederHabibi", (room) => {
@@ -122,15 +144,6 @@ io.on("connection", (socket) => {
     // const [msgDM, setMsgDM] = useState([]);
 
 
-    socket.on("SendMessageToRoom", (room, message) => {
-        const messageObject = {id: Date.now(), content: message};
-        io.to(room).emit("RecieveMessage", messageObject);
-
-        //on the other side
-        // socket.on("SendMessageToRoom", (message) => {
-            // setMsgDM([...msgDM, message]);
-        // })
-    });
 });
 
 
