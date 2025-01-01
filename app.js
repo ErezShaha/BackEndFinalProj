@@ -136,6 +136,10 @@ io.on("connection", (socket) => {
     io.to(room).emit("RecieveDmMessage", roomChats[room]);
   });
 
+  socket.on("LoadRoom", (room) => {
+    io.to(socket.id).emit("RecieveDmMessage", roomChats[room]);
+  });
+
   socket.on("JoinRoom", (room) => {
     socket.join(room);
   });
