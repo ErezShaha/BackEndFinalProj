@@ -17,7 +17,9 @@ const io = new Server(server, {
 });
 
 export const onlineUsers = {};
-const onlineRooms = {};
+const openRooms = {};
+const roomChats = {};
+const chatRoomNumber = 0;
 
 io.on("connection", (socket) => {
     console.log(`Socket ${socket.id} Connected`); 
@@ -26,6 +28,7 @@ io.on("connection", (socket) => {
     // LogIn
     socket.on("UserLogin", (username) => {
         onlineUsers[socket.id] = {username: username};
+        onlineUsers[username] = {socketID: socket.id};
         console.log(`Socket ${socket.id} Loggedin To User ${username}`);
     
         // onlineChange
@@ -52,19 +55,26 @@ io.on("connection", (socket) => {
         console.log("======================Disconnect Start==========================");
         console.log(`Socket ${socket.id} disconnected. Logging out from user ${onlineUsers[socket.id]}`);
 
-        
-        //check if the users taht ahve shared rooms are still online if not delete them from the room list
-        if(onlineRooms[onlineUsers[socket.id]]){
-            
-            console.log(onlineRooms);
-            onlineRooms[onlineUsers[socket.id]].forEach(userConnection => {
-                const indexToRemove = onlineRooms[userConnection.username].findIndex(roomConnection => roomConnection.username === userConnection.username);
-                onlineRooms[userConnection.username].splice(indexToRemove, 1);
-            });
-            console.log(onlineRooms);
-            delete onlineRooms[onlineUsers[socket.id]];
-            console.log(onlineRooms);
+        for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
+            if (usersInRoom.includes(onlineUsers[socket.id].username)) {
+                
+            }
         }
+
+
+        //check if the users taht have shared rooms are still online if not delete them from the room list
+        // if(openRooms[onlineUsers[socket.id]]){
+            
+        //     // console.log(onlineRooms);
+        //     // onlineRooms[onlineUsers[socket.id]].forEach(userConnection => {
+        //     //     const indexToRemove = onlineRooms[userConnection.username].findIndex(roomConnection => roomConnection.username === userConnection.username);
+        //     //     onlineRooms[userConnection.username].splice(indexToRemove, 1);
+        //     // });
+        //     // console.log(onlineRooms);
+        //     // delete onlineRooms[onlineUsers[socket.id]];
+        //     console.log(openRooms);
+        // }
+        delete onlineUsers[onlineUsers[socket.id].username];
         delete onlineUsers[socket.id];
         
         // onlineChange
@@ -97,6 +107,8 @@ io.on("connection", (socket) => {
 
 
 
+
+
     socket.on("SendMessageToEveryone", (message) => {
         const now = new Date();
         const messageObject = {id: Date.now(), content: message , user: onlineUsers[socket.id], msgTime: `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`};
@@ -106,7 +118,8 @@ io.on("connection", (socket) => {
     socket.on("SendMessageToRoom", (room, message) => {
         const now = new Date();
         const messageObject = {id: Date.now(), content: message , user: onlineUsers[socket.id], msgTime: `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`};
-        io.to(room).emit("RecieveMessage", messageObject);
+        roomChats[room] = [...roomChats[room] || [], messageObject];
+        io.to(room).emit("RecieveDmMessage", roomChats[room]);
 
         //on the other side
         // socket.on("SendMessageToRoom", (message) => {
@@ -118,27 +131,50 @@ io.on("connection", (socket) => {
         socket.join(room);
     });
 
-    socket.on("JoinRoomForTwo", (invitedUsername) => {
-        console.log("======================Join Room For Two Start==========================");
-        const sharedRoom = Object.values(onlineRooms[onlineUsers[socket.id]]).find(roomConnections => roomConnections.username === invitedUsername).room;
-        if(!sharedRoom) {
-            sharedRoom = onlineUsers[socket.id].username + invitedUsername;
-            onlineRooms[onlineUsers[socket.id]].push({username: invitedUsername, room: roomName});
-            onlineRooms[invitedUsername].push({username: onlineUsers[socket.id].username, room: roomName});
-            socket.join(roomName);
-        } else {
-            socket.join(sharedRoom);
-        }
-        io.to(inviteUserSocketID).emit("BoBoLahederHabibi", sharedRoom);
-        console.log("======================Join Room For Two End==========================");
+    socket.on("ChatRoom", (secondUser) => {
+        const secondUserSocketID = Object.values(onlineUsers).findIndex(user => user.username === secondUser);
+        console.log("secondUserSocketID", secondUserSocketID);
 
-        //on the other side
-        // socket.on("BoBoLahederHabibi", (room) => {
-            // socket.join(room);
-            // setCorrentRoom(room);
-            // console.log("joined room");
-        // })
+        for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
+            if (usersInRoom.includes(secondUser) && usersInRoom.includes(onlineUsers[socket.id].username)) {
+                io.to(socket.id).emit("RoomNumberForUser", secondUser, roomNumber);
+                io.to(onlineUsers[secondUserSocketID]).emit("RoomNumberForUser", onlineUsers[socket.id].username, roomNumber);
+                return;
+            }
+        }
+        console.log(chatRoomNumber);
+        openRooms[++chatRoomNumber] = [onlineUsers[socket.id].username, secondUser];
+        console.log(chatRoomNumber);
+
+        io.to(socket.id).emit("RoomNumberForUser", secondUser, roomNumber);
+        io.to(onlineUsers[secondUserSocketID]).emit("RoomNumberForUser", onlineUsers[socket.id].username, roomNumber);
     });
+    
+    // socket.on("InviteUserToChat", (inviteUsername) => {
+
+    //     )
+
+    // socket.on("JoinRoomForTwo", (invitedUsername) => {
+    //     console.log("======================Join Room For Two Start==========================");
+    //     const sharedRoom = Object.values(onlineRooms[onlineUsers[socket.id]]).find(roomConnections => roomConnections.username === invitedUsername).room;
+    //     if(!sharedRoom) {
+    //         sharedRoom = onlineUsers[socket.id].username + invitedUsername;
+    //         onlineRooms[onlineUsers[socket.id]].push({username: invitedUsername, room: roomName});
+    //         onlineRooms[invitedUsername].push({username: onlineUsers[socket.id].username, room: roomName});
+    //         socket.join(roomName);
+    //     } else {
+    //         socket.join(sharedRoom);
+    //     }
+    //     io.to(inviteUserSocketID).emit("BoBoLahederHabibi", sharedRoom);
+    //     console.log("======================Join Room For Two End==========================");
+
+    //     //on the other side
+    //     // socket.on("BoBoLahederHabibi", (room) => {
+    //         // socket.join(room);
+    //         // setCorrentRoom(room);
+    //         // console.log("joined room");
+    //     // })
+    // });
 
     // const [currentRoom, setCorrentRoom] = useState();
     // const [msgDM, setMsgDM] = useState([]);

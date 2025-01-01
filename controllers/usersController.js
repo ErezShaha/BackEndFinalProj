@@ -104,9 +104,6 @@ export const verifyToken = async (req, res) => {
         return res.status(401).json({error: 'Invalid Token'});
     }
 
-    // if(Object.values(onlineUsers).find(onlineUser => isTokenVerified.username === onlineUser.username)){
-    //     return res.status(400).json({error: 'User is already logged in'});
-    // };
     console.log("verified")
     return res.send(isTokenVerified.username);
 }
