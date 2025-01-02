@@ -136,6 +136,10 @@ io.on("connection", (socket) => {
     io.to(room).emit("RecieveDmMessage", roomChats[room]);
   });
 
+  socket.on("LoadRoom", (room) => {
+    io.to(socket.id).emit("RecieveDmMessage", roomChats[room]);
+  });
+
   socket.on("JoinRoom", (room) => {
     socket.join(room);
   });
@@ -149,7 +153,7 @@ io.on("connection", (socket) => {
         usersInRoom.includes(secondUser) &&
         usersInRoom.includes(onlineUsers[socket.id].username)
       ) {
-        io.to(socket.id).emit("RoomNumberForUser", secondUser, roomNumber);
+        io.to(socket.id).emit("RoomNumberForUser", roomNumber);
         io.to(onlineUsers[secondUserSocketID]).emit(
           "RoomNumberForUser",
           onlineUsers[socket.id].username,
