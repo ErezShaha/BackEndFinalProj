@@ -19,8 +19,8 @@ const io = new Server(server, {
 export const onlineUsers = {};
 const onlineUsersByUsername = {};
 const openRooms = {};
-const roomChats = {};
-const chatRoomNumber = 0;
+const roomChatsMsgs = {};
+var roomChatsNumber = 0;
 
 io.on("connection", (socket) => {
   console.log(`Socket ${socket.id} Connected`);
@@ -38,10 +38,29 @@ io.on("connection", (socket) => {
 
   // LogOut
   socket.on("UserLogout", () => {
+    socket.rooms.forEach((room) => {socket.leave(room);});
     console.log(
       `Socket ${socket.id} Loggedout from User ${onlineUsers[socket.id]}`
     );
+    const disconnectingUser = onlineUsers[socket.id];
+    if(disconnectingUser) {
+        for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
+            if (usersInRoom.includes(disconnectingUser.username)) {
+            const otherUser = usersInRoom.find(
+                (u) => u !== disconnectingUser.username
+            );
 
+            if (!onlineUsersByUsername[otherUser]) {
+                console.log(`Deleting Chat Room of ${disconnectingUser} and ${otherUser}`);  
+                delete openRooms[roomNumber];
+                delete roomChatsMsgs[roomNumber];
+            }
+            }
+        }
+    }
+
+    if(onlineUsers[socket.id])
+        delete onlineUsersByUsername[onlineUsers[socket.id].username];
     delete onlineUsers[socket.id];
     console.log(`Jobs Done. ${onlineUsers}`);
 
@@ -69,13 +88,15 @@ io.on("connection", (socket) => {
         );
 
         if (!onlineUsersByUsername[otherUser]) {
+          console.log(`Deleting Chat Room of ${disconnectingUser} and ${otherUser}`);  
           delete openRooms[roomNumber];
-          delete roomChats[roomNumber];
+          delete roomChatsMsgs[roomNumber];
         }
       }
     }
 
-    delete onlineUsersByUsername[onlineUsers[socket.id].username];
+    if(onlineUsers[socket.id])
+        delete onlineUsersByUsername[onlineUsers[socket.id].username];
     delete onlineUsers[socket.id];
 
     // onlineChange
@@ -89,10 +110,6 @@ io.on("connection", (socket) => {
   socket.on("giveMeMyUser", () => {
     console.log(onlineUsers);
     io.emit("hereTakeYourUser", Object.values(onlineUsers));
-  });
-
-  socket.on("lookAtOnlineUsers", () => {
-    console.log(onlineUsers);
   });
 
   socket.on("CheckLoggedin", (username) => {
@@ -111,14 +128,12 @@ io.on("connection", (socket) => {
       id: Date.now(),
       content: message,
       user: onlineUsers[socket.id],
-      msgTime: `${now.getHours().toString().padStart(2, "0")}:${now
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`,
+      msgTime: `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`,
     };
 
     io.emit("RecieveMessage", messageObject);
   });
+
 
   socket.on("SendMessageToRoom", (room, message) => {
     const now = new Date();
@@ -126,54 +141,58 @@ io.on("connection", (socket) => {
       id: Date.now(),
       content: message,
       user: onlineUsers[socket.id],
-      msgTime: `${now.getHours().toString().padStart(2, "0")}:${now
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`,
+      msgTime: `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`,
     };
-
-    roomChats[room] = [...(roomChats[room] || []), messageObject];
-    io.to(room).emit("RecieveDmMessage", roomChats[room]);
+    roomChatsMsgs[room] = [...(roomChatsMsgs[room] || []), messageObject];
+    io.to(room).emit("RecieveDmMessage", messageObject);
   });
+
 
   socket.on("LoadRoom", (room) => {
-    io.to(socket.id).emit("RecieveDmMessage", roomChats[room]);
+    console.log(openRooms[room]);
+    io.to(socket.id).emit("LoadRoomChat", roomChatsMsgs[room] || [], openRooms[room], room);
   });
+
 
   socket.on("JoinRoom", (room) => {
     socket.join(room);
   });
+  socket.on("LeaveRoom", (room) => {
+    socket.leave(room);
+  });
 
-  socket.on("ChatRoom", (secondUser) => {
+
+  socket.on("StartChatRoom", (secondUser) => {
     const secondUserSocketID = onlineUsersByUsername[secondUser].socketID;
-    console.log("secondUserSocketID", secondUserSocketID);
-
+    console.log(secondUserSocketID);
+    
     for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
-      if (
-        usersInRoom.includes(secondUser) &&
-        usersInRoom.includes(onlineUsers[socket.id].username)
-      ) {
-        io.to(socket.id).emit("RoomNumberForUser", roomNumber);
-        io.to(onlineUsers[secondUserSocketID]).emit(
-          "RoomNumberForUser",
-          onlineUsers[socket.id].username,
-          roomNumber
-        );
+      if (usersInRoom.includes(secondUser) && usersInRoom.includes(onlineUsers[socket.id].username)) {
+        console.log("checking for existing room");
+        console.log(roomNumber, usersInRoom);
+        console.log(roomChatsMsgs[roomNumber]);
+        console.log(openRooms[roomNumber]);
+        io.to(secondUserSocketID).emit("RoomNumberForUser", onlineUsers[socket.id].username, roomNumber);
+        console.log(onlineUsers);
+        io.to(socket.id).emit("RoomNumberForUser", secondUser, roomNumber);
+        socket.join(roomNumber);
+        io.to(socket.id).emit("LoadRoomChat", roomChatsMsgs[roomNumber] || [], openRooms[roomNumber], roomNumber);
         return;
       }
     }
-    console.log(chatRoomNumber);
-    openRooms[++chatRoomNumber] = [onlineUsers[socket.id].username, secondUser];
-    console.log(chatRoomNumber);
+    console.log("creating new room");
+    const newChatRoomNumber = ++roomChatsNumber;
+    openRooms[newChatRoomNumber] = [onlineUsers[socket.id].username, secondUser];
 
-    io.to(socket.id).emit("RoomNumberForUser", secondUser, roomNumber);
-    io.to(onlineUsers[secondUserSocketID]).emit(
-      "RoomNumberForUser",
-      onlineUsers[socket.id].username,
-      roomNumber
-    );
+    io.to(secondUserSocketID).emit("RoomNumberForUser", onlineUsers[socket.id].username, newChatRoomNumber);
+
+    io.to(socket.id).emit("RoomNumberForUser", secondUser, newChatRoomNumber);
+    socket.join(newChatRoomNumber);
+    io.to(socket.id).emit("LoadRoomChat", roomChatsMsgs[newChatRoomNumber] || [], openRooms[newChatRoomNumber], newChatRoomNumber);
   });
 });
+
+
 
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json());
