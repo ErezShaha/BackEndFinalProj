@@ -149,6 +149,8 @@ io.on("connection", (socket) => {
     roomChatsMsgs[room] = [...(roomChatsMsgs[room] || []), messageObject];
     console.log("sending msg to" + openRooms[room]);
     io.to(room).emit("RecieveDmMessage", messageObject);
+
+    io.to(openRooms[room]).emit("MsgNotif", onlineUsers[socket.id].username);
   });
 
 
@@ -167,31 +169,94 @@ io.on("connection", (socket) => {
 
 
   socket.on("StartChatRoom", (secondUser) => {
-    const secondUserSocketID = onlineUsersByUsername[secondUser].socketID;
+    const firstUser = onlineUsers[socket.id].username;
+    const secondUserSocketID = onlineUsersByUsername[secondUser].socketID
     
-    for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
-      if (usersInRoom.includes(secondUser) && usersInRoom.includes(onlineUsers[socket.id].username)) {
-        console.log("existing room found: " + roomNumber);
-        
-        io.to(secondUserSocketID).emit("RoomNumberForUser", onlineUsers[socket.id].username, roomNumber);
-        io.to(socket.id).emit("RoomNumberForUser", secondUser, roomNumber);
-        
-        socket.join(roomNumber);
-        io.to(socket.id).emit("LoadRoomChat", roomChatsMsgs[roomNumber] || [], openRooms[roomNumber], roomNumber);
-        return;
-      }
-    }
-    const newChatRoomNumber = ++roomChatsNumber;
-    console.log("new room was created: " + newChatRoomNumber);
-    openRooms[newChatRoomNumber] = [onlineUsers[socket.id].username, secondUser];
+    const roomNumber = searchOrCreateRoom(firstUser, secondUser);
 
-    io.to(secondUserSocketID).emit("RoomNumberForUser", onlineUsers[socket.id].username, newChatRoomNumber);
-    io.to(socket.id).emit("RoomNumberForUser", secondUser, newChatRoomNumber);
+    io.to(socket.id).emit("RoomNumberForUser", secondUser, roomNumber);
+    io.to(secondUserSocketID).emit("RoomNumberForUser", firstUser, roomNumber);
 
-    socket.join(newChatRoomNumber);
-    io.to(socket.id).emit("LoadRoomChat", roomChatsMsgs[newChatRoomNumber] || [], openRooms[newChatRoomNumber], newChatRoomNumber);
+    socket.join(roomNumber);
+    io.to(socket.id).emit("LoadRoomChat", roomChatsMsgs[roomNumber] || [], openRooms[roomNumber], roomNumber);
+  });
+
+
+
+  socket.on("InviteUserToGame", (secondUser) => {
+    const firstUser = onlineUsers[socket.id].username;
+    const secondUserSocketID = onlineUsersByUsername[secondUser].socketID
+    const roomNumber = searchOrCreateRoom(firstUser, secondUser);
+
+    io.to(socket.id).emit("RoomNumberForUser", secondUser, roomNumber);
+    io.to(secondUserSocketID).emit("RoomNumberForUser", firstUser, roomNumber);
+
+    io.to(secondUserSocketID).emit("GameNotif", firstUser);
+
+    socket.rooms.forEach((room) => {
+        if(room !== socket.id){
+            socket.leave(room);
+        }});
+    socket.join(roomNumber);
+
+    io.to(socket.id).emit("GoWaitInGameRoom", roomNumber);
+    socket.emit("UserIsIngame", firstUser, secondUser);
+  })
+
+  socket.on("JoinGameRoom", (room, secondUser) => {
+    socket.rooms.forEach((room) => {
+        if(room !== socket.id){
+            socket.leave(room);
+        }});
+    socket.join(roomNumber);
+
+    io.to(onlineUsersByUsername[secondUser].socketID).emit("GameNotif", firstUser);
+
+    io.to(socket.id).emit("GoWaitInGameRoom", room);
+    socket.emit("UserIsIngame", firstUser, secondUser);
   });
 });
+
+
+
+
+
+
+
+const searchOrCreateRoom = (firstUsername, secondUsername) => {
+    
+    for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
+      if (usersInRoom.includes(secondUsername) && usersInRoom.includes(firstUsername)) {
+        console.log("existing room found: " + roomNumber);
+        
+        return roomNumber;
+      }
+    }
+    console.log("new room was created: " + newChatRoomNumber);
+    const newChatRoomNumber = ++roomChatsNumber;
+    openRooms[newChatRoomNumber] = [firstUsername, secondUsername];
+
+    return newChatRoomNumber;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -213,3 +278,107 @@ mongoose
   .catch((err) => {
     console.log(err);
   });
+
+
+
+// import { useEffect, useState } from "react";
+// import Button from "react-bootstrap/Button";
+// import Card from "react-bootstrap/Card";
+// import ButtonGroup from "react-bootstrap/ButtonGroup";
+// import Form from "react-bootstrap/Form";
+// import InputGroup from "react-bootstrap/InputGroup";
+// import { CardBody } from "react-bootstrap";
+// import HomePage from "../pages/HomePage";
+// import "../styles/OnlineUsers.css";
+// import { socket } from "../utils/socket";
+// import { useGlobalContext } from "../contexts/GlobalContext";
+
+
+// // http://localhost:5173/
+
+// const OnlineUsers = ({ user }) => {
+//   const { mainUser } = useGlobalContext();
+//   const [room, setRoom] = useState();
+//   const [msgNotif, setMsgNotif] = useState(false);
+//   const [gameNotif, setGameNotif] = useState(false);
+//   const [busyUser, setBusyUser] = useState(false);
+
+
+//   const startChatRoom = () => {
+//     console.log("StartChatRoom");
+//     socket.emit("StartChatRoom", user.username);
+//   };
+
+//   const openChat = () => {
+//     console.log("openChat");
+//     setMsgNotif(false);
+//     socket.emit("JoinAndLoadRoom", room);
+//   };
+
+
+//   const inviteToGame = () => {
+//     console.log("inviting User To Game");
+//     socket.emit("InviteUserToGame", user.username);
+//   }
+  
+//   const joinGame = () => {
+//     console.log("joinGame");
+//     socket.emit("JoinGameRoom", room, user.username);
+//   }
+
+
+//   useEffect(() => {
+//     socket.on("RoomNumberForUser", (username, roomNumber) => {
+//       console.log("RoomNumberForUser");
+//       console.log(username, roomNumber);
+//       if (user.username === username) {
+//         console.log(roomNumber);
+//         setRoom(roomNumber);
+//       }
+//     });
+
+//     socket.on("UserIsIngame", (busyUser, secondBusyUser) => {
+//       if (user.username === busyUser && mainUser.username !== secondBusyUser) {
+//         setBusyUser(true);
+//       }
+//     })
+
+//     socket.on("MsgNotif", (sendingUser) => {
+//       if (sendingUser === user.username) {
+//         setMsgNotif(true);
+//     }})
+
+//     socket.on("GameNotif", (sendingUser) => {
+//       if (sendingUser === user.username) {
+//         setGameNotif(true);
+//       }
+//     })
+//   }, []);
+
+//   return (
+//     <Card className="userCard">
+//       <CardBody>
+//         <li>
+//           <span>{user.username}</span>
+//           <Button variant="warning" onClick={room ? openChat : startChatRoom}>
+//             {room ? "openChats" : "startChatRooms"}
+//           </Button>
+//           {msgNotif ? <div>aigool</div> : null}
+
+//           <Button variant="danger" onClick={busyUser ? disabled=true : (room ? joinGame : inviteToGame)}>
+//             {busyUser ? "In A Game" : (gameNotif ? "Join A Game" : "Invite To A Game")}
+//             </Button>
+//           {gameNotif ? <div>aigool</div> : null}
+//         </li>
+//       </CardBody>
+//     </Card>
+//   );
+// };
+
+// export default OnlineUsers;
+
+// socket.on("GoWaitInGameRoom", (room) => {
+//     console.log(`I go sit in the conrner (room: ${room}) and wait for my friend :)`);
+//     navigate(`/game/${room}`);
+//   })
+  
