@@ -167,7 +167,6 @@ io.on("connection", (socket) => {
 
 
   socket.on("StartChatRoom", (secondUser) => {
-    io.to(socket.id).emit("Reee");
     const secondUserSocketID = onlineUsersByUsername[secondUser].socketID;
     
     for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
