@@ -232,8 +232,8 @@ const searchOrCreateRoom = (firstUsername, secondUsername) => {
         return roomNumber;
       }
     }
-    console.log("new room was created: " + newChatRoomNumber);
     const newChatRoomNumber = ++roomChatsNumber;
+    console.log("new room was created: " + newChatRoomNumber);
     openRooms[newChatRoomNumber] = [firstUsername, secondUsername];
 
     return newChatRoomNumber;
