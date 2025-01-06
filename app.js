@@ -26,6 +26,7 @@ io.on("connection", (socket) => {
   socket.join(socket.id);
   console.log(`Socket ${socket.id} Connected`);
 
+
   // LogIn
   socket.on("UserLogin", (username) => {
     onlineUsers[socket.id] = { username: username };
@@ -154,12 +155,29 @@ io.on("connection", (socket) => {
   });
 
 
+  socket.on("StartGameRoom", (room) => {
+    socket.rooms.forEach((room) => {
+      if(room !== socket.id){
+          socket.leave(room);
+      }});
+    socket.join(room);
+    const [firstUser, secondUser] = openRooms[room];
+    if(io.rooms[room].includes(onlineUsersByUsername[firstUser].socketID) && io.rooms[room].includes(onlineUsersByUsername[secondUser].socketID)){
+      io.to(socket.id).emit("BothAreHereWooHoo");
+    };
+  });
+  
   socket.on("JoinAndLoadRoom", (room) => {
+    socket.rooms.forEach((room) => {
+      if(room !== socket.id){
+          socket.leave(room);
+      }});
     socket.join(room);
     io.to(socket.id).emit("LoadRoomChat", roomChatsMsgs[room] || [], openRooms[room], room);
+
   });
 
-
+  
   socket.on("JoinRoom", (room) => {
     socket.join(room);
   });
