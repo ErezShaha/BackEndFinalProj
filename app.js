@@ -154,7 +154,6 @@ io.on("connection", (socket) => {
 
     const currentRoom = io.sockets.adapter.rooms.get(room);
     openRooms[room].forEach((user) => {
-        console.log(currentRoom);
         if(!user !== onlineUsers[socket.id] && !currentRoom.has(onlineUsersByUsername[user].socketID)){
             io.to(onlineUsersByUsername[user].socketID).emit("MsgNotif", onlineUsers[socket.id].username);
         };
