@@ -172,7 +172,7 @@ io.on("connection", (socket) => {
   });
   
   socket.on("ImHereLetsGo", (room) => {
-    socket.to(room).emit("BothHere");
+    io.to(room).emit("BothHere");
   })
 
   socket.on("JoinAndLoadRoom", (room) => {
