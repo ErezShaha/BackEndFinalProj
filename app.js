@@ -161,14 +161,14 @@ io.on("connection", (socket) => {
   });
 
 
-  socket.on("StartGameRoom", (room) => {
+  socket.on("StartGameRoom", (room, url) => {
     socket.rooms.forEach((room) => {
       if(room !== socket.id){
           socket.leave(room);
       }});
     socket.join(room);
-
-    socket.to(room).emit("AreYouHereToPlay", window.location.href);
+      
+    socket.to(room).emit("AreYouHereToPlay", url);
   });
   
   socket.on("ImHereLetsGo", (room) => {
