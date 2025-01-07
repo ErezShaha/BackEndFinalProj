@@ -104,7 +104,6 @@ export const verifyToken = async (req, res) => {
         return res.status(401).json({error: 'Invalid Token'});
     }
 
-    console.log("verified")   
     return res.send(isTokenVerified.username);
 }
 
