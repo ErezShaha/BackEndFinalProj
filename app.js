@@ -167,14 +167,14 @@ io.on("connection", (socket) => {
           socket.leave(room);
       }});
     socket.join(room);
-    
-    const [firstUser, secondUser] = openRooms[room];
 
-    if(io.rooms[room].includes(onlineUsersByUsername[firstUser].socketID) && io.rooms[room].includes(onlineUsersByUsername[secondUser].socketID)){
-      io.to(socket.id).emit("BothAreHereWooHoo");
-    };
+    socket.to(room).emit("AreYouHereToPlay", window.location.href);
   });
   
+  socket.on("ImHereLetsGo", (room) => {
+    socket.to(room).emit("BothHere");
+  })
+
   socket.on("JoinAndLoadRoom", (room) => {
     socket.rooms.forEach((room) => {
       if(room !== socket.id){
@@ -224,6 +224,7 @@ io.on("connection", (socket) => {
   })
 
   socket.on("JoinGameRoom", (room, secondUser) => {
+    const firstUser = onlineUsers[socket.id].username;
     io.to(onlineUsersByUsername[secondUser].socketID).emit("GameNotif", firstUser);
 
     io.to(socket.id).emit("GoWaitInGameRoom", room);
