@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import userRouter from "./routers/userRouter.js";
 import http from "http";
 import { Server } from "socket.io";
+import { createTictactoeGame, proccessTurn, endTurn } from "./utils/tictactoeFuncs.js"
 
 config();
 
@@ -230,6 +231,26 @@ io.on("connection", (socket) => {
     io.to(socket.id).emit("GoWaitInGameRoom", room);
     socket.emit("UserIsIngame", firstUser, secondUser);
   });
+
+
+
+  socket.on("GamePicked", (gameName, room) => {
+    io.to(room).emit("LoadGame", gameName);
+    gameName === "Ticktactoe" ? createTictactoeGame(room) : null;
+    // : create memoryGame(room);
+  })
+
+  socket.on("TurnTaken", (room, slot) => {
+    var turnResult = proccessTurn(room, slot);
+    turnResult === "Slot Taken" ? 
+        io.to(room).emit("InvalidAction") :
+        turnResult === "tie" ? 
+            io.to(room).emit("GameTie") : 
+            (
+                endTurn(room),
+                io.to(room).emit("TurnEnd")
+            )
+  }) 
 });
 
 
