@@ -20,13 +20,15 @@ export function createGame(room, gameName){
         games[room] = gameName === 'Tictactoe'? new Tictactoe() : new MemoryGame();
         console.log(`Started a new ${gameName} game in room ${room}`);
     }
+    return games[room].gameBoard;
 }
 
 //proccess TTT turn
-export function proccessTurnTTT(room, slot){
-    var resultDetails = {result: null, board: null, winCondition: null, turn: null};
+export  function proccessTurnTTT(room, slot){
+    var resultDetails = {result: null, board: null, winCondition: null, currentPlayer: null};
+
     resultDetails.result = games[room].updateGameBoard(slot);
-    
+
     if(!resultDetails.result){
         var gameWon = games[room].checkWinConditions();
         if(gameWon){
@@ -34,22 +36,19 @@ export function proccessTurnTTT(room, slot){
                 resultDetails.result = "tie";
             } else {
                 resultDetails.result = "win";
-                resultDetails.board = gameWon;
+                resultDetails.board = games[room].gameBoard;
                 resultDetails.winCondition = gameWon;
+                resultDetails.currentPlayer = games[room].currentPlayer;
+
             }
         }
     }
 
-    if(!resultDetails.result) {
-        resultDetails.result
-    }
     if(!resultDetails.board){
         games[room].nextTurn();
         resultDetails.board = games[room].gameBoard;
     }
-    
-    resultDetails.turn = games[room].currnetPlayer;
-    
+        
     return resultDetails;
 }
 

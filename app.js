@@ -91,6 +91,7 @@ io.on("connection", (socket) => {
         onlineUsers[socket.id]
       }`
     );
+
     const disconnectingUser = onlineUsers[socket.id];
     if (disconnectingUser) {
       for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
@@ -128,6 +129,15 @@ io.on("connection", (socket) => {
       console.log("good job saved dab");
       console.log(onlineUsers);
     }
+
+    socket.rooms.forEach((room) => {
+      if (room !== socket.id) {
+        socket.to(room).emit("NewPageNewMe");
+        socket.leave(room);
+      }
+    });
+    
+
     io.emit("hereTakeYourUser", Object.values(onlineUsers));
   });
 
@@ -265,34 +275,27 @@ io.on("connection", (socket) => {
 
 
   socket.on("GamePicked", (gameName, room) => {
-    createGame(room, gameName);
+    var cleanboard = createGame(room, gameName);
     io.to(room).emit("MoveToGame", gameName)
-    io.to(socket.id).emit("You'reFirst");
+    io.to(room).emit("UpdateBoard", cleanboard);
+    // sending the sending person that hes the first player
+    io.to(socket.id).emit("you'reFirst");
   });
 
 
   socket.on("TurnTaken", (room, slot) => {
-    var {result, board, winCondition, turn} = proccessTurnTTT(room, slot);
+    var {result, board, winCondition, currentPlayer} = proccessTurnTTT(room, slot);
+    
 
-    io.to(room).emit("updateBoard", board, turn);
+    io.to(room).emit("UpdateBoard", board);
 
     if (result === "tie") {
-        io.to(room).emit("Tie");
+      io.to(room).emit("Tie");
     } else if (result === "win") {
-        io.to(room).emit("Win", board, turn);
+      io.to(room).emit("Win", winCondition, currentPlayer);
+    } else {
+      io.to(room).emit("NextTurn");
     }
-
-//    if (result === "Slot Taken") {
-//         io.to(room).emit("SlotTaken");
-//     } else if (result === "tie") {
-//         io.to(room).emit("Tie");
-//     } else if (result === "win") {
-//         io.to(room).emit("Win", board, turn);
-//     } else {
-//         io.to(room).emit("NextTurn", board, turn);
-//     }
-
-
   });
 
 
