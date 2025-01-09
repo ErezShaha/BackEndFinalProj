@@ -24,7 +24,7 @@ export function createGame(room, gameName){
 
 //proccess TTT turn
 export function proccessTurnTTT(room, slot){
-    var resultDetails = {result: null, board: null, turn: null};
+    var resultDetails = {result: null, board: null, winCondition: null, turn: null};
     resultDetails.result = games[room].updateGameBoard(slot);
     
     if(!resultDetails.result){
@@ -35,6 +35,7 @@ export function proccessTurnTTT(room, slot){
             } else {
                 resultDetails.result = "win";
                 resultDetails.board = gameWon;
+                resultDetails.winCondition = gameWon;
             }
         }
     }

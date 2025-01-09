@@ -267,23 +267,30 @@ io.on("connection", (socket) => {
   socket.on("GamePicked", (gameName, room) => {
     createGame(room, gameName);
     io.to(room).emit("MoveToGame", gameName)
-    io.to(socket.id).emit("YoureFirst");
+    io.to(socket.id).emit("You'reFirst");
   });
 
 
   socket.on("TurnTaken", (room, slot) => {
-    var {result, board, turn} = proccessTurnTTT(room, slot);
+    var {result, board, winCondition, turn} = proccessTurnTTT(room, slot);
 
+    io.to(room).emit("updateBoard", board, turn);
 
-   if (result === "Slot Taken") {
-        io.to(room).emit("SlotTaken");
-    } else if (result === "tie") {
+    if (result === "tie") {
         io.to(room).emit("Tie");
     } else if (result === "win") {
         io.to(room).emit("Win", board, turn);
-    } else {
-        io.to(room).emit("NextTurn", board, turn);
     }
+
+//    if (result === "Slot Taken") {
+//         io.to(room).emit("SlotTaken");
+//     } else if (result === "tie") {
+//         io.to(room).emit("Tie");
+//     } else if (result === "win") {
+//         io.to(room).emit("Win", board, turn);
+//     } else {
+//         io.to(room).emit("NextTurn", board, turn);
+//     }
 
 
   });
