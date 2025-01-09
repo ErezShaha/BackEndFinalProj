@@ -266,10 +266,27 @@ io.on("connection", (socket) => {
 
   socket.on("GamePicked", (gameName, room) => {
     createGame(room, gameName);
-    io.to(room).emit("GamePicked", gameName)
-    
+    io.to(room).emit("MoveToGame", gameName)
+    io.to(socket.id).emit("YoureFirst");
   });
 
+
+  socket.on("TurnTaken", (room, slot) => {
+    var resultDetails = proccessTurnTTT(room, slot);
+
+
+   if (resultDetails[result] === "Slot Taken") {
+    io.to(room).emit("SlotTaken");
+    } else if (resultDetails[result] === "tie") {
+        io.to(room).emit("Tie");
+    } else if (resultDetails[result] === "win") {
+        io.to(room).emit("Win", resultDetails[board], resultDetails[turn]);
+    } else {
+        io.to(room).emit("NextTurn", resultDetails[board], resultDetails[turn]);
+    }
+
+
+  });
 
 
   socket.on("TurnTaken", (room, slotOne, slotTwo) => {
@@ -283,18 +300,7 @@ io.on("connection", (socket) => {
     } else {
       io.to(room).emit("TurnEndedMoveOn");
     }
-  });
-
-
-
-  socket.on("TurnTaken", (room, slot) => {
-    var turnResult = proccessTurnTTT(room, slot);
-    turnResult === "Slot Taken"
-      ? io.to(room).emit("InvalidAction")
-      : turnResult === "tie"
-      ? io.to(room).emit("GameTie")
-      : io.to(room).emit("TurnEndedMoveOn");
-  });
+  });  
 });
 
 

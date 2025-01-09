@@ -24,17 +24,29 @@ export function createGame(room, gameName){
 
 //proccess TTT turn
 export function proccessTurnTTT(room, slot){
-    if(!games[room].updateGameBoard(slot)){
-        return "Slot Taken";
+    var resultDetails = {};
+    resultDetails[result] = games[room].updateGameBoard(slot);
+    
+    if(!resultDetails[result]){
+        var gameWon = games[room].checkWinConditions();
+        if(gameWon){
+            if(gameWon === "tie"){
+                resultDetails[result] = "tie";
+            } else {
+                resultDetails[result] = "win";
+                resultDetails[board] = gameWon;
+            }
+        }
     }
 
-    var gameWon = games[room].checkWinConditions();
-    if(gameWon){
-        return gameWon;
+    if(!resultDetails[board]){
+        games[room].nextTurn();
+        resultDetails[board] = games[room].gameBoard;
     }
-
-    games[room].nextTurn();
-    return games[room].currnetPlayer;
+    
+    resultDetails[turn] = games[room].currnetPlayer;
+    
+    return resultDetails;
 }
 
 //process Memory turn

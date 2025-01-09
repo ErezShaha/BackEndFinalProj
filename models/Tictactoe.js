@@ -20,11 +20,10 @@ export default class Tictactoe {
         this.turn = 1;
     }
     updateGameBoard(slot) {
-        if(this.gameBoard.indexOf(slot) === '') {
-            this.gameBoard[slot] = this.currentPlayer;
-        } else {
-            return false;
+        if(this.gameBoard.indexOf(slot) !== '') {
+            return "Slot Taken";
         }
+        this.gameBoard[slot] = this.currentPlayer;
     }
     checkWinConditions() {
         for(let i = 0; i < winConditions.length; i++) {
@@ -40,7 +39,6 @@ export default class Tictactoe {
         if(turn === this.gameBoard.length+1) {
             return "tie";
         }        
-        return false;
     }
     nextTurn() {
         this.games[room].turn++;
