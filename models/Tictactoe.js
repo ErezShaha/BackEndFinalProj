@@ -1,4 +1,4 @@
-export default class TictactoeGame {
+export default class Tictactoe {
     winConditions = [
         [0, 1, 2],
         [3, 4, 5],
@@ -17,7 +17,6 @@ export default class TictactoeGame {
     }
     restartGame() {
         this.gameBoard = ['', '', '', '', '', '', '', '',''];
-        this.currentPlayer = 'X';
         this.turn = 1;
     }
     updateGameBoard(slot) {

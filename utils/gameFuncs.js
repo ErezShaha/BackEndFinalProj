@@ -1,22 +1,23 @@
-import TictactoeGame from "TictactoeGame.js";
+import Tictactoe from "../models/Tictactoe.js";
 import MemoryGame from "../models/Memorygame.js";
-const games = {};
+
+const games = {}; //key room number. value gameName
 
 
 export function createGame(room, gameName){
     
     if(games[room]){
         if(gameName === 'Tictactoe'){ 
-            games[room] instanceof TictactoeGame ? games[room].restartGame() : games[room] = new MemoryGame();
+            games[room] instanceof Tictactoe ? games[room].restartGame() : games[room] = new MemoryGame();
             console.log(`Tictactoe Ended and ${gameName} started room ${room}`);
         }
         else{
-            games[room] instanceof TictactoeGame ? games[room] = new TictactoeGame() : games[room].restartGame();
+            games[room] instanceof Tictactoe ? games[room] = new Tictactoe() : games[room].restartGame();
             console.log(`MemoryGame Ended and ${gameName} started room ${room}`);
         }
     }
     else{
-        games[room] = gameName === 'Tictactoe'? new TictactoeGame() : new MemoryGame();
+        games[room] = gameName === 'Tictactoe'? new Tictactoe() : new MemoryGame();
         console.log(`Started a new ${gameName} game in room ${room}`);
     }
 }

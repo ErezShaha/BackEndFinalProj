@@ -235,6 +235,7 @@ io.on("connection", (socket) => {
     );
   });
 
+
   socket.on("InviteUserToGame", (secondUser) => {
     const firstUser = onlineUsers[socket.id].username;
     const secondUserSocketID = onlineUsersByUsername[secondUser].socketID;
@@ -249,6 +250,7 @@ io.on("connection", (socket) => {
     socket.emit("UserIsIngame", firstUser, secondUser);
   });
 
+
   socket.on("JoinGameRoom", (room, secondUser) => {
     const firstUser = onlineUsers[socket.id].username;
     io.to(onlineUsersByUsername[secondUser].socketID).emit(
@@ -260,10 +262,13 @@ io.on("connection", (socket) => {
     socket.emit("UserIsIngame", firstUser, secondUser);
   });
 
+
+
   socket.on("GamePicked", (gameName, room) => {
-    io.to(room).emit("LoadGame", gameName);
     createGame(room, gameName);
   });
+
+
 
   socket.on("TurnTaken", (room, slotOne, slotTwo) => {
     var turnResult = proccessTurnMG(room, slotOne, slotTwo);
@@ -278,6 +283,8 @@ io.on("connection", (socket) => {
     }
   });
 
+
+
   socket.on("TurnTaken", (room, slot) => {
     var turnResult = proccessTurnTTT(room, slot);
     turnResult === "Slot Taken"
@@ -287,6 +294,10 @@ io.on("connection", (socket) => {
       : io.to(room).emit("TurnEndedMoveOn");
   });
 });
+
+
+
+
 
 const searchOrCreateRoom = (firstUsername, secondUsername) => {
   for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
@@ -306,13 +317,17 @@ const searchOrCreateRoom = (firstUsername, secondUsername) => {
   return newChatRoomNumber;
 };
 
+
+
+
+
+
 app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use("/api/v1/users", userRouter);
-//app.use('/api/v1/lobby', lobbyRouter);
 
 mongoose
   .connect(process.env.MONGO_CONNECTION)

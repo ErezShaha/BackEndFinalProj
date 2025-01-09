@@ -2,11 +2,11 @@ export default class MemoryGame {
     
     constructor() {
         this.gameBoard = ['Blue', 'Blue', 'Orange', 'Orange', 'Red', 'Red', 'Purple', 'Purple', 'Green', 'Green', 'Yellow', 'Yellow'];
+        shuffleBoard();
         this.currentPlayer = 'Player One';
         this.playerOneScore = 0;
         this.playerTwoScore = 0;
         this.turn = 1;
-        shuffleBoard();
     }
 
     restartGame() {
