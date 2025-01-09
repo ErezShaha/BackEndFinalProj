@@ -266,6 +266,8 @@ io.on("connection", (socket) => {
 
   socket.on("GamePicked", (gameName, room) => {
     createGame(room, gameName);
+    io.to(room).emit("GamePicked", gameName)
+    
   });
 
 

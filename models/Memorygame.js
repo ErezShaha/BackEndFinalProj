@@ -1,5 +1,12 @@
 export default class MemoryGame {
     
+    shuffleBoard() {
+        for (let i = this.gameBoard.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.gameBoard[i], this.gameBoard[j]] = [this.gameBoard[j], this.gameBoard[i]];
+        }
+    }
+
     constructor() {
         this.gameBoard = ['Blue', 'Blue', 'Orange', 'Orange', 'Red', 'Red', 'Purple', 'Purple', 'Green', 'Green', 'Yellow', 'Yellow'];
         shuffleBoard();
@@ -34,11 +41,5 @@ export default class MemoryGame {
             return 'Its A Tie!';
         return "No Winner Yet";
     }
-}
 
-function shuffleBoard() {
-    for (let i = this.gameBoard.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [this.gameBoard[i], this.gameBoard[j]] = [this.gameBoard[j], this.gameBoard[i]];
-    }
 }
