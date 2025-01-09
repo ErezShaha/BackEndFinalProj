@@ -272,17 +272,17 @@ io.on("connection", (socket) => {
 
 
   socket.on("TurnTaken", (room, slot) => {
-    var resultDetails = proccessTurnTTT(room, slot);
+    var {result, board, turn} = proccessTurnTTT(room, slot);
 
 
-   if (resultDetails[result] === "Slot Taken") {
-    io.to(room).emit("SlotTaken");
-    } else if (resultDetails[result] === "tie") {
+   if (result === "Slot Taken") {
+        io.to(room).emit("SlotTaken");
+    } else if (result === "tie") {
         io.to(room).emit("Tie");
-    } else if (resultDetails[result] === "win") {
-        io.to(room).emit("Win", resultDetails[board], resultDetails[turn]);
+    } else if (result === "win") {
+        io.to(room).emit("Win", board, turn);
     } else {
-        io.to(room).emit("NextTurn", resultDetails[board], resultDetails[turn]);
+        io.to(room).emit("NextTurn", board, turn);
     }
 
 
