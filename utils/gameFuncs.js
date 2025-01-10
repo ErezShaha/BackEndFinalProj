@@ -12,7 +12,7 @@ export function createGame(room, gameName){
             console.log(`Tictactoe Ended and ${gameName} started room ${room}`);
         }
         else{
-            games[room] instanceof Tictactoe ? games[room] = new Tictactoe() : games[room].restartGame();
+            games[room] instanceof Tictactoe ? games[room] = new MemoryGame() : games[room].restartGame();
             console.log(`MemoryGame Ended and ${gameName} started room ${room}`);
         }
     }
