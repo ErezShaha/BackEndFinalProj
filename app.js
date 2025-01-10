@@ -10,6 +10,7 @@ import {
   createGame,
   proccessTurnTTT,
   proccessTurnMG,
+  RevealMGSlot
 } from "./utils/gameFuncs.js";
 
 config();
@@ -287,6 +288,31 @@ io.on("connection", (socket) => {
   });
 
 
+  socket.on("LookAtSlot", (room, slot) => {
+    console.log(slot);
+    io.to(room).emit("RevealedSlot", RevealMGSlot(room, slot), slot);
+  })
+
+  socket.on("TurnTakenMG", (room, slots) => {
+    console.log("MG turn happened with 2 slots")
+    console.log(slots);
+    var {result, board} = proccessTurnMG(room, slots[0], slots[1]);
+
+    console.log(result, board);
+
+    if(result) {
+      if (result === "Colors Matched")
+        io.to(room).emit("UpdateBoard", board);
+      else if (result === "Tie")
+        io.to(room).emit("Tie");
+      else if (result === "Win")
+        io.to(room).emit("Win", null , onlineUsers[socket.id].username);
+      else if (result === "Next Turn")
+        io.to(room).emit("NextTurn");
+      }
+  });  
+
+
   socket.on("TurnTakenTTT", (room, slot) => {
     var {result, board, winCondition} = proccessTurnTTT(room, slot);
     
@@ -301,21 +327,6 @@ io.on("connection", (socket) => {
       io.to(room).emit("NextTurn");
     }
   });
-
-
-  socket.on("TurnTakenMG", (room, slotOne, slotTwo) => {
-    var {result, board} = proccessTurnMG(room, slotOne, slotTwo);
-
-    if(!result) {
-      io.to(room).emit("NextTurn");
-    } else {
-      io.to(room).emit("UpdateBoard", board);
-      if (result === "Tie")
-        io.to(room).emit("Tie");
-      else if (result === "Win")
-        io.to(room).emit("Win", null , onlineUsers[socket.id].username);
-    }
-  });  
 });
 
 

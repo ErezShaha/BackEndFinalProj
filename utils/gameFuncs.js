@@ -29,7 +29,7 @@ export  function proccessTurnTTT(room, slot){
 
     resultDetails.result = games[room].updateGameBoard(slot);
 
-    if(!resultDetails.result){
+    if(resultDetails.result === "Colors Matched"){
         var gameWon = games[room].checkWinConditions();
         if(gameWon){
             if(gameWon === "tie"){
@@ -50,21 +50,24 @@ export  function proccessTurnTTT(room, slot){
     return resultDetails;
 }
 
+
 //process Memory turn
 export function proccessTurnMG(room, slotOne, slotTwo){
-    var resultDetails = {result: null, board: null, slotColor: null, currentPlayerScore: null};
+    var resultDetails = {result: null, board: null};
     resultDetails.result = games[room].updateGameBoard(slotOne, slotTwo);
     
     
-    
-    if (resultDetails.result){
+    if(resultDetails.result === "Colors Matched"){
         resultDetails.board = games[room].gameBoard;
-        // resultDetails.slotColor = games[room].fullGameBoard[slotOne];
-        // resultDetails.currentPlayerScore = games[room].currentPlayer === "Player One" ? games[room].playerOneScore : games[room].playerTwoScore;
-        
+
         var gameEnd = games[room].checkWinConditions();
         if (gameEnd) 
             resultDetails.result = gameEnd;
     }
+    return resultDetails;
+}
+
+export function RevealMGSlot(room, slot) {
+    return games[room].fullGameBoard[slot];
 }
 

@@ -12,33 +12,34 @@ export default class MemoryGame {
         this.shuffleBoard();
         this.gameBoard = ['', '', '', '', '', '', '', '','','','','','','','',''];
         this.currentPlayer = 'Player One';
-        this.playerOneScore = 0;
-        this.playerTwoScore = 0;
-        this.turn = 1;
     }
 
     restartGame() {
         this.shuffleBoard();
         this.gameBoard = ['', '', '', '', '', '', '', '','','','','','','','',''];
-        this.playerOneScore = 0;
-        this.playerTwoScore = 0;
     }
 
     updateGameBoard(slotOne, slotTwo) {
-        this.turn++;
-        if(this.fullGameBoard[slotOne] === this.fullGameBoard[slotTwo]) {
-            this.currentPlayer === 'Player One' ? this.playerOneScore++ : this.playerTwoScore++;
-            this.gameBoard[slotOne] = {player: this.currentPlayer, color: this.fullGameBoard[slotOne]};
-            this.gameBoard[slotTwo] = {player: this.currentPlayer, color: this.fullGameBoard[slotOne]};
-            return "Colors Matched";
+        if(this.gameBoard[slotOne] === ''){
+            if(this.fullGameBoard[slotOne] === this.fullGameBoard[slotTwo]) {
+                this.gameBoard[slotOne] = {player: this.currentPlayer, color: this.fullGameBoard[slotOne]};
+                this.gameBoard[slotTwo] = {player: this.currentPlayer, color: this.fullGameBoard[slotTwo]};
+                console.log("update board colors matched")
+                return "Colors Matched";
+            };
+            this.currentPlayer === 'Player One'? this.currentPlayer = 'Player Two' : this.currentPlayer = 'Player One';
+            return "Next Turn"
         };
-        this.currentPlayer === 'Player One'? this.currentPlayer = 'Player Two' : this.currentPlayer = 'Player One';
     }
 
     checkWinConditions() {
-        if (this.playerOneScore === (this.fullGameBoard.length / 4 + 1) || this.playerTwoScore === (this.fullGameBoard.length / 4 + 1))
+        const playerScore = this.gameBoard.filter(slot => slot.player === this.currentPlayer).length;
+
+        if ( playerScore === (this.fullGameBoard.length / 2 + 1))
             return 'Win';
-        if (this.playerOneScore === this.fullGameBoard.length / 4 && this.playerTwoScore === this.fullGameBoard.length / 4)
+
+        const slotsLeft = this.gameBoard.filter(slot => slot !== '').length;
+        if (slotsLeft === this.fullGameBoard.length)
             return 'Tie';
     }
 
