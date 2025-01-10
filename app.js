@@ -284,7 +284,7 @@ io.on("connection", (socket) => {
 
 
   socket.on("TurnTaken", (room, slot) => {
-    var {result, board, winCondition, currentPlayer} = proccessTurnTTT(room, slot);
+    var {result, board, winCondition} = proccessTurnTTT(room, slot);
     
 
     io.to(room).emit("UpdateBoard", board);
@@ -292,7 +292,7 @@ io.on("connection", (socket) => {
     if (result === "tie") {
       io.to(room).emit("Tie");
     } else if (result === "win") {
-      io.to(room).emit("Win", winCondition, onlineUsers[socket.id]);
+      io.to(room).emit("Win", winCondition, onlineUsers[socket.id].username);
     } else {
       io.to(room).emit("NextTurn");
     }
@@ -300,15 +300,16 @@ io.on("connection", (socket) => {
 
 
   socket.on("TurnTaken", (room, slotOne, slotTwo) => {
-    var turnResult = proccessTurnMG(room, slotOne, slotTwo);
+    var {result, board, currentPlayerScore} = proccessTurnMG(room, slotOne, slotTwo);
 
-    if (
-      turnResult === "Player One Wins!" ||
-      turnResult === "Player Two Wins!"
-    ) {
-      io.to(room).emit("GameEnded", turnResult);
+    if(!result) {
+      io.to(room).emit("NextTurn");
     } else {
-      io.to(room).emit("TurnEndedMoveOn");
+      io.to(room).emit("UpdateBoard", board, currentPlayerScore);
+      if (result === "Tie")
+        io.to(room).emit("Tie");
+      else if (result === "Win")
+        io.to(room).emit("Win", onlineUsers[socket.id].username);
     }
   });  
 });

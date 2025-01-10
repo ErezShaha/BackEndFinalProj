@@ -25,7 +25,7 @@ export function createGame(room, gameName){
 
 //proccess TTT turn
 export  function proccessTurnTTT(room, slot){
-    var resultDetails = {result: null, board: null, winCondition: null, currentPlayer: null};
+    var resultDetails = {result: null, board: null, winCondition: null};
 
     resultDetails.result = games[room].updateGameBoard(slot);
 
@@ -38,8 +38,6 @@ export  function proccessTurnTTT(room, slot){
                 resultDetails.result = "win";
                 resultDetails.board = games[room].gameBoard;
                 resultDetails.winCondition = gameWon;
-                resultDetails.currentPlayer = games[room].currentPlayer;
-
             }
         }
     }
@@ -54,11 +52,17 @@ export  function proccessTurnTTT(room, slot){
 
 //process Memory turn
 export function proccessTurnMG(room, slotOne, slotTwo){
-    var result = games[room].updateGameBoard(slotOne, slotTwo);
+    var resultDetails = {result: null, board: null, currentPlayerScore: null};
+    resultDetails.result = games[room].updateGameBoard(slotOne, slotTwo);
+    
+    
+    
+    if (resultDetails.result){
+        resultDetails.board = games[room].gameBoard;
 
-    if(result === "Point Scored!"){
-        return games[room].checkWinConditions();
+        resultDetails.currentPlayerScore = games[room].currentPlayer === "Player One" ? games[room].playerOneScore : games[room].playerTwoScore;
+
+        resultDetails.games[room].checkWinConditions()
     }
-    return games[room].currnetPlayer;
 }
 
