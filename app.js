@@ -293,6 +293,7 @@ io.on("connection", (socket) => {
       io.to(room).emit("Tie");
     } else if (result === "win") {
       io.to(room).emit("Win", winCondition, currentPlayer);
+      io.to(socket.id).emit("YoureTheWinner", currentPlayer);
     } else {
       io.to(room).emit("NextTurn");
     }
