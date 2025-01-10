@@ -7,7 +7,7 @@ const games = {}; //key room number. value gameName
 export function createGame(room, gameName){
     
     if(games[room]){
-        if(gameName === 'Tictactoe'){ 
+        if(gameName === "Tictactoe"){ 
             games[room] instanceof Tictactoe ? games[room].restartGame() : games[room] = new MemoryGame();
             console.log(`Tictactoe Ended and ${gameName} started room ${room}`);
         }
@@ -17,7 +17,7 @@ export function createGame(room, gameName){
         }
     }
     else{
-        games[room] = gameName === 'Tictactoe'? new Tictactoe() : new MemoryGame();
+        games[room] = gameName === "Tictactoe"? new Tictactoe() : new MemoryGame();
         console.log(`Started a new ${gameName} game in room ${room}`);
     }
     return games[room].gameBoard;
@@ -52,17 +52,19 @@ export  function proccessTurnTTT(room, slot){
 
 //process Memory turn
 export function proccessTurnMG(room, slotOne, slotTwo){
-    var resultDetails = {result: null, board: null, currentPlayerScore: null};
+    var resultDetails = {result: null, board: null, slotColor: null, currentPlayerScore: null};
     resultDetails.result = games[room].updateGameBoard(slotOne, slotTwo);
     
     
     
     if (resultDetails.result){
         resultDetails.board = games[room].gameBoard;
-
-        resultDetails.currentPlayerScore = games[room].currentPlayer === "Player One" ? games[room].playerOneScore : games[room].playerTwoScore;
-
-        resultDetails.games[room].checkWinConditions()
+        // resultDetails.slotColor = games[room].fullGameBoard[slotOne];
+        // resultDetails.currentPlayerScore = games[room].currentPlayer === "Player One" ? games[room].playerOneScore : games[room].playerTwoScore;
+        
+        var gameEnd = games[room].checkWinConditions();
+        if (gameEnd) 
+            resultDetails.result = gameEnd;
     }
 }
 

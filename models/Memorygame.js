@@ -9,7 +9,7 @@ export default class MemoryGame {
 
     constructor() {
         this.fullGameBoard = ['Blue', 'Blue', 'Orange', 'Orange', 'Red', 'Red', 'Purple', 'Purple', 'Green', 'Green', 'Yellow', 'Yellow', 'Pink', 'Pink', 'Cyan', 'Cyan'];
-        shuffleBoard();
+        this.shuffleBoard();
         this.gameBoard = ['', '', '', '', '', '', '', '','','','','','','','',''];
         this.currentPlayer = 'Player One';
         this.playerOneScore = 0;
@@ -18,7 +18,7 @@ export default class MemoryGame {
     }
 
     restartGame() {
-        shuffleBoard();
+        this.shuffleBoard();
         this.gameBoard = ['', '', '', '', '', '', '', '','','','','','','','',''];
         this.playerOneScore = 0;
         this.playerTwoScore = 0;
@@ -28,8 +28,8 @@ export default class MemoryGame {
         this.turn++;
         if(this.fullGameBoard[slotOne] === this.fullGameBoard[slotTwo]) {
             this.currentPlayer === 'Player One' ? this.playerOneScore++ : this.playerTwoScore++;
-            this.gameBoard[slotOne] = this.fullGameBoard[slotOne];
-            this.gameBoard[slotTwo] = this.fullGameBoard[slotTwo];
+            this.gameBoard[slotOne] = {player: this.currentPlayer, color: this.fullGameBoard[slotOne]};
+            this.gameBoard[slotTwo] = {player: this.currentPlayer, color: this.fullGameBoard[slotOne]};
             return "Colors Matched";
         };
         this.currentPlayer === 'Player One'? this.currentPlayer = 'Player Two' : this.currentPlayer = 'Player One';
