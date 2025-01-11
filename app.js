@@ -287,8 +287,6 @@ io.on("connection", (socket) => {
   })
 
   socket.on("TurnTakenMG", (room, slots) => {
-    console.log("MG turn happened with 2 slots")
-    console.log(slots);
     var {result, board} = proccessTurnMG(room, slots[0], slots[1]);
 
     console.log(result, board);
