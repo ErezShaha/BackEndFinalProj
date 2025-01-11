@@ -29,7 +29,7 @@ export  function proccessTurnTTT(room, slot){
 
     resultDetails.result = games[room].updateGameBoard(slot);
 
-    if(resultDetails.result === "Colors Matched"){
+    if(!resultDetails.result){
         var gameWon = games[room].checkWinConditions();
         if(gameWon){
             if(gameWon === "tie"){

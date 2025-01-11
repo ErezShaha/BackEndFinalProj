@@ -12,6 +12,7 @@ import {
   proccessTurnMG,
   RevealMGSlot
 } from "./utils/gameFuncs.js";
+//import { searchOrCreateRoom } from "./utils/funcions.js"
 
 config();
 
@@ -39,7 +40,7 @@ io.on("connection", (socket) => {
 
     // onlineChange
     console.log(onlineUsers);
-    io.emit("hereTakeYourUser", Object.values(onlineUsers));
+    io.emit("OnlineUsersChange", Object.values(onlineUsers));
   });
 
   // LogOut
@@ -81,22 +82,17 @@ io.on("connection", (socket) => {
 
     // onlineChange
     console.log(onlineUsers);
-    io.emit("hereTakeYourUser", Object.values(onlineUsers));
+    io.emit("OnlineUsersChange", Object.values(onlineUsers));
   });
 
   // Disconnect
   socket.on("disconnect", () => {
-    console.log(
-      "======================Disconnect Start=========================="
-    );
-    console.log(
-      `Socket ${socket.id} disconnected. Logging out from user ${
-        onlineUsers[socket.id]
-      }`
-    );
+    console.log("======================Disconnect Start==========================");
+    console.log(`Socket ${socket.id} disconnected. Logging out from user ${onlineUsers[socket.id]}`);
 
     const disconnectingUser = onlineUsers[socket.id];
     if (disconnectingUser) {
+      // checking if both users in a room are logged out the chat they had is deleted
       for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
         if (usersInRoom.includes(disconnectingUser.username)) {
           const otherUser = usersInRoom.find(
@@ -119,34 +115,33 @@ io.on("connection", (socket) => {
 
     // onlineChange
     console.log(onlineUsers);
-    io.emit("hereTakeYourUser", Object.values(onlineUsers));
-    console.log(
-      "======================Disconnect End=========================="
-    );
+    io.emit("UpdatedOnlineUsers", Object.values(onlineUsers));
+    console.log("======================Disconnect End==========================");
   });
 
   socket.on("CheckLoggedin", (username) => {
+    // if user changed socket id (refreash page) they get relogged in
     if (!onlineUsers[socket.id]) {
       onlineUsers[socket.id] = { username: username };
       onlineUsersByUsername[username] = { socketID: socket.id };
-      console.log("good job saved dab");
+      console.log("user changed socket");
     }
-
-    socket.rooms.forEach((room) => {
-      if (room !== socket.id) {
-        socket.to(room).emit("NewPageNewMe");
-        socket.leave(room);
-      }
-    });
+    
+    io.emit("OnlineUsersChange", Object.values(onlineUsers));
+  });
+    // socket.rooms.forEach((room) => {
+    //   if (room !== socket.id) {
+    //     socket.to(room).emit("NewPageNewMe");
+    //     socket.leave(room);
+    //   }
+    //});
+    
+      // socket.on("GetOnlineUsers", () => {
+      //   console.log(onlineUsers);
+      //   io.emit("OnlineUsersChange", Object.values(onlineUsers));
+      // });
     
 
-    io.emit("hereTakeYourUser", Object.values(onlineUsers));
-  });
-
-  socket.on("giveMeMyUser", () => {
-    console.log(onlineUsers);
-    io.emit("hereTakeYourUser", Object.values(onlineUsers));
-  });
 
   socket.on("SendMessageToEveryone", (message) => {
     const now = new Date();
@@ -160,7 +155,7 @@ io.on("connection", (socket) => {
         .padStart(2, "0")}`,
     };
 
-    io.emit("RecieveMessage", messageObject);
+    io.emit("RecieveGlobalMessage", messageObject);
   });
 
   socket.on("SendMessageToRoom", (room, message) => {
@@ -174,14 +169,17 @@ io.on("connection", (socket) => {
         .toString()
         .padStart(2, "0")}`,
     };
+
+    //adding new msg to the old msgs in the room
     roomChatsMsgs[room] = [...(roomChatsMsgs[room] || []), messageObject];
     console.log("sending msg to" + openRooms[room]);
     io.to(room).emit("RecieveDmMessage", messageObject);
 
+    // sending msg notification to the other user if theyre not in the room right now
     const currentRoom = io.sockets.adapter.rooms.get(room);
     openRooms[room].forEach((user) => {
       if (
-        !user !== onlineUsers[socket.id] &&
+        user !== onlineUsers[socket.id].username &&
         !currentRoom.has(onlineUsersByUsername[user].socketID)
       ) {
         io.to(onlineUsersByUsername[user].socketID).emit(
@@ -192,25 +190,16 @@ io.on("connection", (socket) => {
     });
   });
   
-  socket.on("ReturnToGameSelection", (room) => {
-    io.to(room).emit("MoveToGame", null);
-  });
-
-  socket.on("StartGameRoom", (room, url) => {
-    socket.to(room).emit("AreYouHereToPlay", url);
-  });
-
-  socket.on("ImHereLetsGo", (room) => {
-    io.to(room).emit("BothHere");
-  });
-
-  socket.on("JoinAndLoadRoom", (room) => {
+  
+   // joining a room and loading the msgs
+   socket.on("JoinAndLoadRoom", (room) => {
     socket.rooms.forEach((room) => {
       if (room !== socket.id) {
         socket.leave(room);
       }
     });
     socket.join(room);
+
     io.to(socket.id).emit(
       "LoadRoomChat",
       roomChatsMsgs[room] || [],
@@ -219,12 +208,7 @@ io.on("connection", (socket) => {
     );
   });
 
-  socket.on("JoinRoom", (room) => {
-    socket.join(room);
-  });
-  socket.on("LeaveRoom", (room) => {
-    socket.leave(room);
-  });
+
 
   socket.on("StartChatRoom", (secondUser) => {
     const firstUser = onlineUsers[socket.id].username;
@@ -250,11 +234,13 @@ io.on("connection", (socket) => {
     const secondUserSocketID = onlineUsersByUsername[secondUser].socketID;
     const roomNumber = searchOrCreateRoom(firstUser, secondUser);
 
+    // sending room number to both users
     io.to(socket.id).emit("RoomNumberForUser", secondUser, roomNumber);
     io.to(secondUserSocketID).emit("RoomNumberForUser", firstUser, roomNumber);
 
     io.to(secondUserSocketID).emit("GameNotif", firstUser);
 
+    // sending sending the inviting user to wait in the game page
     io.to(socket.id).emit("GoWaitInGameRoom", roomNumber);
     socket.emit("UserIsIngame", firstUser, secondUser);
   });
@@ -267,26 +253,47 @@ io.on("connection", (socket) => {
       firstUser
     );
 
+    // sending sending the inviting user to wait in the game page
     io.to(socket.id).emit("GoWaitInGameRoom", room);
     socket.emit("UserIsIngame", firstUser, secondUser);
   });
 
 
 
+
+
+  // sending a check to see if both users are in the game page
+  socket.on("StartGameRoom", (room, url) => {
+    socket.to(room).emit("AreYouHereToPlay", url);
+  });
+  
+  // both players are in the game page can start
+  socket.on("ImHereLetsGo", (room) => {
+    io.to(room).emit("BothHere");
+  });
+
+
+  socket.on("ReturnToGameSelection", (room) => {
+    io.to(room).emit("MoveToGame", null);
+  });
+
+
+  // starting / restarting the selected game
   socket.on("GamePicked", (gameName, room) => {
     var cleanboard = createGame(room, gameName);
-    io.to(room).emit("MoveToGame", gameName)
+    io.to(room).emit("MoveToGame", gameName);
     io.to(room).emit("UpdateBoard", cleanboard);
     // sending the sending person that hes the first player
     socket.to(room).emit("You'reFirst");
   });
 
 
+  //checking the color of a memory game slot and returning the color
   socket.on("LookAtSlot", (room, slot) => {
-    console.log(slot);
     io.to(room).emit("RevealedSlot", RevealMGSlot(room, slot), slot);
   })
 
+  // proccess memory game turn and returning the correct emit for the result of the turn
   socket.on("TurnTakenMG", (room, slots) => {
     var {result, board} = proccessTurnMG(room, slots[0], slots[1]);
 
@@ -311,6 +318,7 @@ io.on("connection", (socket) => {
   });  
 
 
+  // proccess Tictaktoe turn and returning the correct emit for the result of the turn
   socket.on("TurnTakenTTT", (room, slot) => {
     var {result, board, winCondition} = proccessTurnTTT(room, slot);
     
@@ -326,29 +334,6 @@ io.on("connection", (socket) => {
     }
   });
 });
-
-
-
-
-
-const searchOrCreateRoom = (firstUsername, secondUsername) => {
-  for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
-    if (
-      usersInRoom.includes(secondUsername) &&
-      usersInRoom.includes(firstUsername)
-    ) {
-      console.log("existing room found: " + roomNumber);
-
-      return roomNumber;
-    }
-  }
-  const newChatRoomNumber = ++roomChatsNumber;
-  console.log("new room was created: " + newChatRoomNumber);
-  openRooms[newChatRoomNumber] = [firstUsername, secondUsername];
-
-  return newChatRoomNumber;
-};
-
 
 
 
@@ -371,3 +356,23 @@ mongoose
   .catch((err) => {
     console.log(err);
   });
+
+
+
+const searchOrCreateRoom = (firstUsername, secondUsername) => {
+  for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
+    if (
+      usersInRoom.includes(secondUsername) &&
+      usersInRoom.includes(firstUsername)
+    ) {
+      console.log("existing room found: " + roomNumber);
+
+      return roomNumber;
+    }
+  }
+  const newChatRoomNumber = ++roomChatsNumber;
+  console.log("new room was created: " + newChatRoomNumber);
+  openRooms[newChatRoomNumber] = [firstUsername, secondUsername];
+
+  return newChatRoomNumber;
+};

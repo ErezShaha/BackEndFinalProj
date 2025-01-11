@@ -17,6 +17,7 @@ export default class MemoryGame {
     restartGame() {
         this.shuffleBoard();
         this.gameBoard = ['', '', '', '', '', '', '', '','','','','','','','',''];
+        this.currentPlayer = 'Player One';
     }
 
     updateGameBoard(slotOne, slotTwo) {
