@@ -29,7 +29,6 @@ const roomChatsMsgs = {};
 var roomChatsNumber = 0;
 
 io.on("connection", (socket) => {
-  socket.join(socket.id);
   console.log(`Socket ${socket.id} Connected`);
 
   // LogIn
@@ -50,17 +49,20 @@ io.on("connection", (socket) => {
         socket.leave(room);
       }
     });
-    console.log(
-      `Socket ${socket.id} Loggedout from User ${onlineUsers[socket.id]}`
-    );
+
+    console.log(`Socket ${socket.id} Loggedout from User ${onlineUsers[socket.id]}`);
+
     const disconnectingUser = onlineUsers[socket.id];
     if (disconnectingUser) {
+
+      // checking if both users in a room are logged out the chat they had is deleted
       for (const [roomNumber, usersInRoom] of Object.entries(openRooms)) {
+        // if the logging out user is in the room
         if (usersInRoom.includes(disconnectingUser.username)) {
           const otherUser = usersInRoom.find(
             (u) => u !== disconnectingUser.username
           );
-
+          // and the second user in the room is logged out
           if (!onlineUsersByUsername[otherUser]) {
             console.log(
               `Deleting Chat Room of ${disconnectingUser} and ${otherUser}`
@@ -128,7 +130,6 @@ io.on("connection", (socket) => {
       onlineUsers[socket.id] = { username: username };
       onlineUsersByUsername[username] = { socketID: socket.id };
       console.log("good job saved dab");
-      console.log(onlineUsers);
     }
 
     socket.rooms.forEach((room) => {
@@ -191,9 +192,9 @@ io.on("connection", (socket) => {
     });
   });
   
-    socket.on("ReturnToGameSelection", (room) => {
-      io.to(room).emit("MoveToGame", null);
-    });
+  socket.on("ReturnToGameSelection", (room) => {
+    io.to(room).emit("MoveToGame", null);
+  });
 
   socket.on("StartGameRoom", (room, url) => {
     socket.to(room).emit("AreYouHereToPlay", url);

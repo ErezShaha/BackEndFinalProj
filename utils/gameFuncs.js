@@ -8,7 +8,7 @@ export function createGame(room, gameName){
     
     if(games[room]){
         if(gameName === "Tictactoe"){ 
-            games[room] instanceof Tictactoe ? games[room].restartGame() : games[room] = new MemoryGame();
+            games[room] instanceof Tictactoe ? games[room].restartGame() : games[room] = new Tictactoe();
             console.log(`Tictactoe Ended and ${gameName} started room ${room}`);
         }
         else{
