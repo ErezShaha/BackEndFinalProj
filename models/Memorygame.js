@@ -35,7 +35,7 @@ export default class MemoryGame {
     checkWinConditions() {
         const playerScore = this.gameBoard.filter(slot => slot.player === this.currentPlayer).length;
 
-        if ( playerScore === (this.fullGameBoard.length / 2 + 1))
+        if ( playerScore > (this.fullGameBoard.length / 2))
             return 'Win';
 
         const slotsLeft = this.gameBoard.filter(slot => slot !== '').length;

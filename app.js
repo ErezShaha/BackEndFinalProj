@@ -303,12 +303,18 @@ io.on("connection", (socket) => {
     if(result) {
       if (result === "Colors Matched")
         io.to(room).emit("UpdateBoard", board);
-      else if (result === "Tie")
+      else if (result === "Tie"){
+        io.to(room).emit("UpdateBoard", board);
         io.to(room).emit("Tie");
-      else if (result === "Win")
+      }
+      else if (result === "Win"){
+        io.to(room).emit("UpdateBoard", board);
         io.to(room).emit("Win", null , onlineUsers[socket.id].username);
+      }
       else if (result === "Next Turn")
-        io.to(room).emit("NextTurn");
+        setTimeout(() => {
+          io.to(room).emit("NextTurn");
+        } ,500)
       }
   });  
 
