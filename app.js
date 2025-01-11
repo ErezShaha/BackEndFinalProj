@@ -191,7 +191,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("StartGameRoom", (room, url) => {
+  socket.on("JoinAndLoadRoom", (room, url) => {
     socket.rooms.forEach((room) => {
       if (room !== socket.id) {
         socket.leave(room);
@@ -210,20 +210,20 @@ io.on("connection", (socket) => {
     io.to(room).emit("BothHere");
   });
 
-  socket.on("JoinAndLoadRoom", (room) => {
-    socket.rooms.forEach((room) => {
-      if (room !== socket.id) {
-        socket.leave(room);
-      }
-    });
-    socket.join(room);
-    io.to(socket.id).emit(
-      "LoadRoomChat",
-      roomChatsMsgs[room] || [],
-      openRooms[room],
-      room
-    );
-  });
+  // socket.on("JoinAndLoadRoom", (room) => {
+  //   socket.rooms.forEach((room) => {
+  //     if (room !== socket.id) {
+  //       socket.leave(room);
+  //     }
+  //   });
+  //   socket.join(room);
+  //   io.to(socket.id).emit(
+  //     "LoadRoomChat",
+  //     roomChatsMsgs[room] || [],
+  //     openRooms[room],
+  //     room
+  //   );
+  // });
 
   socket.on("JoinRoom", (room) => {
     socket.join(room);
