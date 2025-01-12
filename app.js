@@ -129,17 +129,7 @@ io.on("connection", (socket) => {
     
     io.emit("OnlineUsersChange", Object.values(onlineUsers));
   });
-    // socket.rooms.forEach((room) => {
-    //   if (room !== socket.id) {
-    //     socket.to(room).emit("NewPageNewMe");
-    //     socket.leave(room);
-    //   }
-    //});
-    
-      // socket.on("GetOnlineUsers", () => {
-      //   console.log(onlineUsers);
-      //   io.emit("OnlineUsersChange", Object.values(onlineUsers));
-      // });
+
     
 
 
@@ -273,9 +263,13 @@ io.on("connection", (socket) => {
   });
 
 
-  socket.on("ReturnToGameSelection", (room) => {
+  socket.on("CancelGame", (room) => {
     io.to(room).emit("MoveToGame", null);
   });
+
+  socket.on("PlayerLeft", (room) => {
+    io.to(room).emit("PlayerLeft");
+  })
 
 
   // starting / restarting the selected game
